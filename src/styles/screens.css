@@ -1,0 +1,313 @@
+/* Level Map Screen */
+#map {
+  padding-bottom: 24px;
+}
+
+#map .hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  padding: 8px 6px 12px;
+}
+
+#map .list {
+  flex: 1;
+  width: 100%;
+  max-width: 440px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 14px;
+  padding: 24px 0 60px;
+  scrollbar-width: thin;
+}
+
+.node {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid var(--b);
+  background: var(--y);
+  color: var(--b);
+  font: 800 28px var(--font-game);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+  box-shadow: 0 6px 0 var(--o), 0 10px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.14s ease;
+  position: relative;
+}
+
+.node:hover {
+  transform: translateX(-50%) scale(1.05);
+}
+
+.node:active {
+  transform: translateX(-50%) scale(0.94) !important;
+}
+
+.node small {
+  font-size: 13px;
+  color: var(--o);
+  letter-spacing: 1.5px;
+  margin-top: 3px;
+}
+
+.node.lock {
+  background: #3d5a4e;
+  color: #8aa89a;
+  cursor: default;
+  border-color: #2a4238;
+  box-shadow: 0 4px 0 #20352c;
+}
+
+.node.lock:hover {
+  transform: translateX(-50%) scale(1);
+}
+
+.node.cur {
+  box-shadow: 0 0 0 8px rgba(255, 201, 60, 0.45), 0 6px 0 var(--o);
+  animation: pulseNode 1.6s infinite alternate ease-in-out;
+}
+
+/* Rush Level Node & Badge */
+.node.rush-node {
+  border-color: #ff3366;
+  background: linear-gradient(135deg, #ffc93c 0%, #ff5722 100%);
+  box-shadow: 0 6px 0 #c2185b, 0 10px 20px rgba(255, 87, 34, 0.4);
+}
+
+.node.rush-node::before {
+  content: '⚡';
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.rush-badge {
+  position: absolute;
+  bottom: -10px;
+  background: #ff3366;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.06em;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+@keyframes pulseNode {
+  from {
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    transform: translateX(-50%) scale(1.08);
+  }
+}
+
+/* Daily Challenges Screen */
+#daily {
+  padding: 24px 16px;
+}
+
+#daily #dl {
+  width: 100%;
+  max-width: 420px;
+  overflow-y: auto;
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#daily #dl .row {
+  max-width: 100%;
+  padding: 14px 18px;
+  border-radius: 16px;
+}
+
+/* Leaderboard & Tournaments Screen */
+#lb {
+  padding: 20px 16px;
+}
+
+.lb-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.38);
+  border-radius: 20px;
+  padding: 5px;
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+  margin: 10px 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lb-tab {
+  flex: 1;
+  background: transparent;
+  color: var(--c);
+  border: none;
+  font: 800 14px var(--font-game);
+  padding: 9px 12px;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.lb-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lb-tab.active {
+  background: var(--y);
+  color: var(--b);
+  box-shadow: 0 3px 0 var(--o);
+  font-weight: 800;
+  transform: translateY(-1px);
+}
+
+#lb #lbl {
+  width: 100%;
+  max-width: 420px;
+  overflow-y: auto;
+  flex: 1;
+  margin: 4px 0 16px;
+  scrollbar-width: thin;
+  padding-right: 2px;
+}
+
+/* Monthly Tournament Banner Card */
+.tournament-card {
+  background: linear-gradient(135deg, rgba(255, 201, 60, 0.16) 0%, rgba(15, 61, 46, 0.75) 100%);
+  border: 2px solid var(--y);
+  border-radius: 18px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: left;
+}
+
+.tourney-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.countdown-tag {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 201, 60, 0.4);
+  color: var(--y);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.tourney-prize {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #fff9e6;
+  background: rgba(0, 0, 0, 0.26);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border-left: 3px solid var(--y);
+}
+
+/* Top 3 Champions Olympic Podium */
+.podium-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 18px;
+  padding: 6px 2px;
+}
+
+.podium-card {
+  flex: 1;
+  max-width: 125px;
+  border-radius: 18px 18px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 6px 10px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.18s ease;
+}
+
+.podium-card:hover {
+  transform: translateY(-3px);
+}
+
+.podium-card.rank-1 {
+  background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+  color: #24140a;
+  min-height: 128px;
+  border: 2px solid #fff2a3;
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.5), 0 8px 18px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+.podium-card.rank-2 {
+  background: linear-gradient(180deg, #e0e0e0 0%, #7d7d7d 100%);
+  color: #1a1a1a;
+  min-height: 106px;
+  border: 2px solid #ffffff;
+  z-index: 1;
+}
+
+.podium-card.rank-3 {
+  background: linear-gradient(180deg, #cd7f32 0%, #7a3e12 100%);
+  color: #fff4dc;
+  min-height: 94px;
+  border: 2px solid #e6a76e;
+  z-index: 1;
+}
+
+.podium-crown {
+  font-size: 24px;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.podium-name {
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+}
+
+.podium-pts {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 4px 0 2px;
+}
+
+.podium-rank-tag {
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0.85;
+  letter-spacing: 0.05em;
+}

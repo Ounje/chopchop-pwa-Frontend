@@ -1,0 +1,47 @@
+:root {
+  /* Color Palette */
+  --g: #0f3d2e;
+  --g2: #175a43;
+  --g-dark: #0a271e;
+  --g-glass: rgba(15, 61, 46, 0.82);
+  --y: #ffc93c;
+  --y-bright: #ffe17d;
+  --o: #f77f00;
+  --r: #d62828;
+  --c: #fff4dc;
+  --c-light: #fffcf5;
+  --b: #3b2314;
+  --b-dark: #24140a;
+
+  /* Shadows & Depth */
+  --shadow-btn: 0 5px 0 var(--o);
+  --shadow-btn-alt: 0 5px 0 #c9b88f;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 20px rgba(255, 201, 60, 0.5);
+
+  /* Typography */
+  --font-game: 'Baloo 2', system-ui, -apple-system, sans-serif;
+
+  /* Safe Area for iOS and Android notch devices */
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--g);
+  color: var(--c);
+  font-family: var(--font-game);
+  overflow: hidden;
+  touch-action: manipulation;
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CHOP CHOP | An OunjeFood Game</title>
+  <meta name="description" content="CHOP CHOP - The delicious Nigerian food match-3 puzzle game by OunjeFood! Match Jollof, Suya, Amala, and Chicken to complete kitchen orders.">
+  <meta name="theme-color" content="#0f3d2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+
+  <!-- Google Fonts: Baloo 2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 1. Splash Screen -->
+  <div id="load" class="scr on" style="justify-content:center">
+    <h1>CHOP<br>CHOP</h1>
+    <div class="sub">Loading the kitchen...</div>
+  </div>
+
+  <!-- 2. Main Menu Screen -->
+  <div id="menu" class="scr">
+    <div class="brand">OUNJEFOOD</div>
+    <h1>CHOP<br>CHOP</h1>
+    <div class="sub">An OunjeFood Game</div>
+
+    <button class="btn" data-go="map">PLAY</button>
+    <button class="btn alt" data-go="map">LEVELS</button>
+    <button class="btn alt" data-go="lb">LEADERBOARD</button>
+    <button class="btn alt" data-go="daily">DAILY CHALLENGE</button>
+    <button class="btn alt" data-go="settings">SETTINGS</button>
+
+    <div class="coin">
+      <span>OunjeCoins:</span>
+      <span class="coins">0</span>
+    </div>
+  </div>
+
+  <!-- 3. Level Map Screen -->
+  <div id="map" class="scr">
+    <div class="hud" style="max-width:440px">
+      <button class="btn alt" style="min-width:0;font-size:16px;padding:3px 16px" data-go="menu">Back</button>
+      <div class="pill">
+        <b>OUNJECOINS</b>
+        <span class="coins">0</span>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <!-- 4. Daily Orders Screen -->
+  <div id="daily" class="scr">
+    <h1 style="font-size:44px;margin-top:16px">DAILY ORDERS</h1>
+    <div class="sub">Fresh challenges every day</div>
+    <div id="dl"></div>
+    <button class="btn alt" data-go="menu" style="margin-top:auto">Back</button>
+  </div>
+
+  <!-- 5. Global Leaderboard & Monthly Tournament Screen -->
+  <div id="lb" class="scr">
+    <h1 style="font-size:40px;margin-top:8px">TOURNAMENTS</h1>
+    <div class="sub" id="lbn" style="margin:4px 0 10px;">Monthly Championship & Community Rankings</div>
+    <div class="lb-tabs" id="lb-tabs">
+      <button class="lb-tab active" data-tab="monthly">🏆 Monthly Cup</button>
+      <button class="lb-tab" data-tab="weekly">⚡ Weekly Rush</button>
+      <button class="lb-tab" data-tab="alltime">🌟 All-Time</button>
+    </div>
+    <div id="lbl"></div>
+    <div style="display:flex;gap:8px;margin-top:auto;width:100%;max-width:380px;justify-content:center;">
+      <button class="btn" id="lbj" style="flex:1;min-width:0;padding:8px 16px;font-size:18px;">JOIN THE BOARD</button>
+      <button class="btn alt" data-go="menu" style="min-width:0;padding:8px 20px;font-size:18px;">Back</button>
+    </div>
+  </div>
+
+  <!-- 6. Settings Screen -->
+  <div id="settings" class="scr">
+    <h1 style="font-size:44px;margin-top:20px">SETTINGS</h1>
+    <br>
+    <button class="btn" id="snd">Sound: On</button>
+    <button class="btn alt" id="sh">Leaderboard Handle</button>
+    <button class="btn alt" id="rst">Reset Progress</button>
+    <button class="btn alt" data-go="menu" style="margin-top:auto">Back</button>
+  </div>
+
+  <!-- 7. Game Board Screen -->
+  <div id="game" class="scr">
+    <div class="hud">
+      <button class="btn alt" id="pz" style="min-width:0;font-size:18px;padding:2px 14px">II</button>
+      <div class="pill">
+        <b>LEVEL</b>
+        <span id="lv">1</span>
+      </div>
+      <div class="pill">
+        <b>SCORE</b>
+        <span id="sc">0</span>
+      </div>
+      <div class="pill">
+        <b>MOVES</b>
+        <span id="mv">25</span>
+      </div>
+      <div class="pill timer-pill" id="tm-pill" style="display:none">
+        <b>TIME</b>
+        <span id="tm">0:00</span>
+      </div>
+    </div>
+
+    <div class="obs" id="obs"></div>
+    <div id="board"></div>
+
+    <!-- Pre-level Order Preview Modal -->
+    <div class="modal" id="mstart">
+      <h2 id="mst">LEVEL 1</h2>
+      <div class="sub">TODAY'S ORDER</div>
+      <div class="ordr" id="mso"></div>
+      <button class="btn" id="go">START</button>
+    </div>
+
+    <!-- In-Game Pause Modal -->
+    <div class="modal" id="mpause">
+      <h2>PAUSED</h2>
+      <br>
+      <button class="btn" id="res">RESUME</button>
+      <button class="btn alt" id="rtry">RESTART</button>
+      <button class="btn alt" data-go="map">LEVEL MAP</button>
+    </div>
+
+    <!-- Win & Loss Modals Container -->
+    <div class="modal" id="mend"></div>
+  </div>
+
+  <!-- 8. Join / Update Handle Modal -->
+  <div class="modal" id="mjoin">
+    <h2 style="font-size:36px">JOIN THE LEADERBOARD</h2>
+    <div class="sub">Add your handle so we can find you if you win</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <select id="jp">
+        <option value="x">X (Twitter)</option>
+        <option value="ig">Instagram</option>
+      </select>
+      <input type="text" id="jh" maxlength="30" placeholder="yourhandle" autocapitalize="off" autocomplete="off" spellcheck="false">
+    </div>
+    <label class="chk">
+      <input type="checkbox" id="jc">
+      <span>I agree OunjeFood can show my handle publicly on the leaderboard and contact me there.</span>
+    </label>
+    <div id="je"></div>
+    <button class="btn" id="jok">JOIN</button>
+    <button class="btn alt" id="jskip">Not now</button>
+  </div>
+
+  <!-- Vite TypeScript Entrypoint -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
