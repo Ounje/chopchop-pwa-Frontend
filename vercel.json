@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://chopchop-pwa-backend.pxxl.pro/api/:path*"
+    },
+    {
+      "source": "/functions/:path*",
+      "destination": "https://chopchop-pwa-backend.pxxl.pro/functions/:path*"
+    },
+    {
+      "source": "/rest/:path*",
+      "destination": "https://chopchop-pwa-backend.pxxl.pro/rest/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

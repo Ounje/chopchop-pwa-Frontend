@@ -30,8 +30,14 @@ export interface WinnersData {
 
 export class ApiClient {
   // Base URL for API calls. If hosted on a separate server, set VITE_API_URL.
-  // When empty, uses relative paths which Vite proxies to localhost:3001 in dev.
-  private static baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+  // When running in production on a remote host (e.g. Vercel), defaults to the live backend.
+  // When running locally on localhost without VITE_API_URL, uses relative paths which Vite proxies to localhost:3001.
+  private static baseUrl = (
+    import.meta.env.VITE_API_URL ||
+    (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+      ? 'https://chopchop-pwa-backend.pxxl.pro'
+      : '')
+  ).replace(/\/$/, '');
 
   public static async checkHealth(): Promise<boolean> {
     try {
@@ -46,7 +52,7 @@ export class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/leaderboard?limit=${limit}`);
       if (!res.ok) return null;
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       return json.scores || [];
     } catch {
       return null;
@@ -57,7 +63,7 @@ export class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/winners`);
       if (!res.ok) return null;
-      return await res.json();
+      return await res.json().catch(() => null);
     } catch {
       return null;
     }
@@ -67,7 +73,7 @@ export class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/leaderboard/monthly`);
       if (!res.ok) return null;
-      return await res.json();
+      return await res.json().catch(() => null);
     } catch {
       return null;
     }
@@ -77,7 +83,7 @@ export class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/leaderboard/weekly`);
       if (!res.ok) return null;
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       return json.scores || [];
     } catch {
       return null;
@@ -93,7 +99,7 @@ export class ApiClient {
         body: JSON.stringify({ handle, level })
       });
       if (!res.ok) return null;
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       return json.token || null;
     } catch {
       return null;
@@ -117,7 +123,7 @@ export class ApiClient {
         body: JSON.stringify(params)
       });
       if (!res.ok) return null;
-      return await res.json();
+      return await res.json().catch(() => null);
     } catch {
       return null;
     }
@@ -131,12 +137,13 @@ export class ApiClient {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ handle, platform, pid })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        return { success: false, error: data.error || 'Failed to join leaderboard' };
+        return { success: false, error: (data as any)?.error || `Server error (${res.status})` };
       }
       return { success: true };
-    } catch {
+    } catch (err) {
+      console.error('[ApiClient] registerPlayer error:', err);
       return { success: false, error: 'Could not connect to leaderboard server.' };
     }
   }
