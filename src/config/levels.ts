@@ -153,9 +153,9 @@ export function getLevelConfig(level: number): LevelConfig {
   const targetB = 12 + Math.floor(level * 0.7);
   const targetC = 10 + Math.floor(level * 0.6);
 
-  const foodIdxA = (level * 2) % kinds;
-  const foodIdxB = (level * 2 + 1) % kinds;
-  const foodIdxC = (level * 2 + 2) % kinds;
+  const foodIdxA = (level * 2) % FOODS.length;
+  const foodIdxB = (level * 2 + 1) % FOODS.length;
+  const foodIdxC = (level * 2 + 2) % FOODS.length;
 
   const objectives = [
     { food: FOODS[foodIdxA].k, target: targetA },

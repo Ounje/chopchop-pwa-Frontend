@@ -39,11 +39,43 @@ export class BoardEngine {
   private isBusy = false;
   private levelCfg!: LevelConfig;
   private callbacks!: BoardEngineCallbacks;
+  private activeFoodIndices: number[] = [];
   private preferredSpawnKeys: number[] | null = null;
 
   constructor(boardEl: HTMLElement) {
     this.boardEl = boardEl;
     this.setupEventListeners();
+  }
+
+  private setupActiveFoodPool(levelCfg: LevelConfig): void {
+    const pool: number[] = [];
+
+    // 1. Mandatory: include ALL objective food items so requirements always spawn on board
+    if (levelCfg.objectives && levelCfg.objectives.length > 0) {
+      for (const obj of levelCfg.objectives) {
+        const idx = FOODS.findIndex(f => f.k === obj.food);
+        if (idx !== -1 && !pool.includes(idx)) {
+          pool.push(idx);
+        }
+      }
+    }
+
+    // 2. Fill remaining slots up to levelCfg.kinds with other foods
+    const targetCount = Math.max(levelCfg.kinds || 4, pool.length);
+    for (let i = 0; i < FOODS.length && pool.length < targetCount; i++) {
+      if (!pool.includes(i)) {
+        pool.push(i);
+      }
+    }
+
+    this.activeFoodIndices = pool;
+  }
+
+  private getRandomFoodIndex(): number {
+    if (!this.activeFoodIndices || this.activeFoodIndices.length === 0) {
+      return rnd(Math.min(this.levelCfg?.kinds || 4, FOODS.length));
+    }
+    return this.activeFoodIndices[rnd(this.activeFoodIndices.length)];
   }
 
   public init(levelCfg: LevelConfig, callbacks: BoardEngineCallbacks): void {
@@ -52,8 +84,9 @@ export class BoardEngine {
     this.isBusy = false;
     this.selectedTile = null;
     this.dragOrigin = null;
+    this.setupActiveFoodPool(levelCfg);
     this.updateLayout();
-    this.buildNewBoard(levelCfg.kinds);
+    this.buildNewBoard();
   }
 
   public setBusy(busy: boolean): void {
@@ -148,7 +181,7 @@ export class BoardEngine {
     }
   }
 
-  public buildNewBoard(kinds: number): void {
+  public buildNewBoard(): void {
     this.boardEl.innerHTML = '';
     this.grid = Array.from({ length: N }, () => Array(N).fill(null));
 
@@ -157,7 +190,7 @@ export class BoardEngine {
         let t = 0;
         let attempts = 0;
         do {
-          t = rnd(kinds);
+          t = this.getRandomFoodIndex();
           attempts++;
         } while (
           attempts < 30 &&
@@ -171,7 +204,7 @@ export class BoardEngine {
     }
 
     if (!this.hasAvailableMove()) {
-      this.buildNewBoard(kinds);
+      this.buildNewBoard();
     }
   }
 
@@ -310,7 +343,7 @@ export class BoardEngine {
       } else if (p.s === 'c') {
         const targetType = p.target !== undefined ? p.target : (() => {
           const normalTiles = this.grid.flat().filter(x => x && x.t >= 0);
-          return normalTiles.length ? normalTiles[rnd(normalTiles.length)]!.t : 0;
+          return normalTiles.length ? normalTiles[rnd(normalTiles.length)]!.t : this.getRandomFoodIndex();
         })();
         this.grid.flat().forEach(x => {
           if (x && x.t === targetType) addCell(x.r, x.c);
@@ -414,7 +447,7 @@ export class BoardEngine {
 
       // Fill top empty spaces with newly spawned tiles
       for (let r = writeRow; r >= 0; r--) {
-        const p = this.createTile(rnd(this.levelCfg.kinds));
+        const p = this.createTile(this.getRandomFoodIndex());
         this.placeTile(p, r, c, r - (writeRow + 1) - 1);
       }
     }

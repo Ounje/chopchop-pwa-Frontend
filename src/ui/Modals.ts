@@ -4,19 +4,34 @@ import { ApiClient } from '../api/ApiClient.js';
 import { FOODS, getFoodIconHtml } from '../config/foods.js';
 import { ParticleFx } from './ParticleFx.js';
 
+export interface ModalCallbacks {
+  onStartGame: () => void;
+  onRestartLevel: () => void;
+  onNextLevel: () => void;
+  onGoToMap: () => void;
+  onRefreshLeaderboard: () => void;
+  onResumeGame?: () => void;
+}
+
 export class Modals {
-  public static init(callbacks: {
-    onStartGame: () => void;
-    onRestartLevel: () => void;
-    onNextLevel: () => void;
-    onGoToMap: () => void;
-    onRefreshLeaderboard: () => void;
-    onResumeGame?: () => void;
-  }): void {
+  private static callbacks: ModalCallbacks | null = null;
+  private static autoProgressTimer: any = null;
+
+  private static clearAutoProgressTimer(): void {
+    if (this.autoProgressTimer) {
+      clearInterval(this.autoProgressTimer);
+      this.autoProgressTimer = null;
+    }
+  }
+
+  public static init(callbacks: ModalCallbacks): void {
+    this.callbacks = callbacks;
+
     // Start modal button
     const goBtn = document.getElementById('go');
     if (goBtn) {
       goBtn.onclick = () => {
+        this.clearAutoProgressTimer();
         SoundManager.play('click');
         this.hideAll();
         callbacks.onStartGame();
@@ -36,6 +51,7 @@ export class Modals {
     const rtryBtn = document.getElementById('rtry');
     if (rtryBtn) {
       rtryBtn.onclick = () => {
+        this.clearAutoProgressTimer();
         SoundManager.play('click');
         this.hide('mpause');
         callbacks.onRestartLevel();
@@ -99,6 +115,7 @@ export class Modals {
     if (!modal) return;
 
     if (modalId === 'mstart' && data?.cfg) {
+      this.clearAutoProgressTimer();
       const cfg = data.cfg;
       const mst = document.getElementById('mst');
       const mso = document.getElementById('mso');
@@ -111,9 +128,37 @@ export class Modals {
         `<div>🎯 Moves: <b>${cfg.moves}</b></div>` +
         (cfg.timeLimit ? `<div style="color:var(--y)">⏱️ Rush Timer: <b>${cfg.timeLimit} seconds!</b></div>` : '');
       }
+
+      // Progressive auto-start or instant tap
+      const goBtn = document.getElementById('go');
+      if (goBtn) {
+        let goCount = 3;
+        goBtn.innerHTML = `START <small style="opacity:0.85;font-size:14px;">(${goCount}s)</small>`;
+
+        this.autoProgressTimer = setInterval(() => {
+          goCount--;
+          if (goCount > 0) {
+            goBtn.innerHTML = `START <small style="opacity:0.85;font-size:14px;">(${goCount}s)</small>`;
+          } else {
+            this.clearAutoProgressTimer();
+            goBtn.textContent = 'START';
+            this.hideAll();
+            this.callbacks?.onStartGame();
+          }
+        }, 1000);
+
+        goBtn.onclick = () => {
+          this.clearAutoProgressTimer();
+          goBtn.textContent = 'START';
+          SoundManager.play('click');
+          this.hideAll();
+          this.callbacks?.onStartGame();
+        };
+      }
     }
 
     if (modalId === 'mend_win' && data) {
+      this.clearAutoProgressTimer();
       const modalEnd = document.getElementById('mend')!;
       ParticleFx.launchConfetti(modalEnd);
 
@@ -176,11 +221,59 @@ export class Modals {
       `;
 
       modalEnd.classList.add('on');
-      document.getElementById('shr')?.addEventListener('click', () => this.shareScore(data.score));
+
+      if (data.hasNext) {
+        let secondsLeft = 4;
+        const nxBtn = document.getElementById('nx');
+        const updateNxText = () => {
+          if (nxBtn) {
+            nxBtn.innerHTML = `NEXT LEVEL <small style="opacity:0.85;font-size:14px;">(${secondsLeft}s)</small>`;
+          }
+        };
+        updateNxText();
+
+        this.autoProgressTimer = setInterval(() => {
+          secondsLeft--;
+          if (secondsLeft > 0) {
+            updateNxText();
+          } else {
+            this.clearAutoProgressTimer();
+            this.hideAll();
+            this.callbacks?.onNextLevel();
+          }
+        }, 1000);
+
+        if (nxBtn) {
+          nxBtn.onclick = () => {
+            this.clearAutoProgressTimer();
+            SoundManager.play('click');
+            this.hideAll();
+            this.callbacks?.onNextLevel();
+          };
+        }
+      }
+
+      const mapBtn = modalEnd.querySelector('[data-go="map"]');
+      if (mapBtn) {
+        mapBtn.addEventListener('click', () => {
+          this.clearAutoProgressTimer();
+          SoundManager.play('click');
+          this.hideAll();
+          this.callbacks?.onGoToMap();
+        });
+      }
+
+      document.getElementById('shr')?.addEventListener('click', () => {
+        this.clearAutoProgressTimer();
+        const nxBtn = document.getElementById('nx');
+        if (nxBtn) nxBtn.textContent = 'NEXT LEVEL';
+        this.shareScore(data.score);
+      });
       return;
     }
 
     if (modalId === 'mend_lose' && data) {
+      this.clearAutoProgressTimer();
       const modalEnd = document.getElementById('mend')!;
       modalEnd.innerHTML = `
         <h2 style="font-size:38px;">WAHALA!</h2>
@@ -199,6 +292,27 @@ export class Modals {
       `;
 
       modalEnd.classList.add('on');
+
+      const taBtn = document.getElementById('ta');
+      if (taBtn) {
+        taBtn.onclick = () => {
+          this.clearAutoProgressTimer();
+          SoundManager.play('click');
+          this.hideAll();
+          this.callbacks?.onRestartLevel();
+        };
+      }
+
+      const mapBtn = modalEnd.querySelector('[data-go="map"]');
+      if (mapBtn) {
+        mapBtn.addEventListener('click', () => {
+          this.clearAutoProgressTimer();
+          SoundManager.play('click');
+          this.hideAll();
+          this.callbacks?.onGoToMap();
+        });
+      }
+
       document.getElementById('shr')?.addEventListener('click', () => this.shareScore(data.score));
       return;
     }
@@ -207,11 +321,15 @@ export class Modals {
   }
 
   public static hide(modalId: string): void {
+    if (modalId === 'mend' || modalId === 'mend_win' || modalId === 'mend_lose' || modalId === 'mstart') {
+      this.clearAutoProgressTimer();
+    }
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove('on');
   }
 
   public static hideAll(): void {
+    this.clearAutoProgressTimer();
     document.querySelectorAll('.modal').forEach(m => m.classList.remove('on'));
   }
 
