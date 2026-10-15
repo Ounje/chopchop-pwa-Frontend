@@ -2,12 +2,13 @@ import { SoundManager } from '../audio/SoundManager.js';
 import { StorageManager } from '../storage/StorageManager.js';
 import { ApiClient } from '../api/ApiClient.js';
 import { FOODS, getFoodIconHtml } from '../config/foods.js';
+import { getLevelConfig, MAX_LEVELS } from '../config/levels.js';
 import { ParticleFx } from './ParticleFx.js';
 
 export interface ModalCallbacks {
   onStartGame: () => void;
   onRestartLevel: () => void;
-  onNextLevel: () => void;
+  onNextLevel: (targetLevel?: number) => void;
   onGoToMap: () => void;
   onRefreshLeaderboard: () => void;
   onResumeGame?: () => void;
@@ -20,6 +21,7 @@ export class Modals {
   private static clearAutoProgressTimer(): void {
     if (this.autoProgressTimer) {
       clearInterval(this.autoProgressTimer);
+      clearTimeout(this.autoProgressTimer);
       this.autoProgressTimer = null;
     }
   }
@@ -111,7 +113,9 @@ export class Modals {
   }
 
   public static show(modalId: string, data?: any): void {
-    const modal = document.getElementById(modalId);
+    // Correctly resolve virtual modal IDs ('mend_win', 'mend_lose') to the real container element ('mend')
+    const targetId = (modalId === 'mend_win' || modalId === 'mend_lose') ? 'mend' : modalId;
+    const modal = document.getElementById(targetId);
     if (!modal) return;
 
     if (modalId === 'mstart' && data?.cfg) {
@@ -129,10 +133,10 @@ export class Modals {
         (cfg.timeLimit ? `<div style="color:var(--y)">⏱️ Rush Timer: <b>${cfg.timeLimit} seconds!</b></div>` : '');
       }
 
-      // Progressive auto-start or instant tap
+      // Quick 2-second countdown or instant tap to play
       const goBtn = document.getElementById('go');
       if (goBtn) {
-        let goCount = 3;
+        let goCount = 2;
         goBtn.innerHTML = `START <small style="opacity:0.85;font-size:14px;">(${goCount}s)</small>`;
 
         this.autoProgressTimer = setInterval(() => {
@@ -171,6 +175,10 @@ export class Modals {
         : data.stars === 2
         ? '★★ Senior Cook Rating!'
         : '★ Line Cook Passed!';
+
+      const nextLevel = data.level + 1;
+      const hasNext = Boolean(data.hasNext && nextLevel <= MAX_LEVELS);
+      const nextCfg = hasNext ? getLevelConfig(nextLevel) : null;
 
       modalEnd.innerHTML = `
         <h2 style="font-size:38px;margin-bottom:2px;">ORDER MASTERED!</h2>
@@ -213,8 +221,23 @@ export class Modals {
           </div>
         </div>
 
-        <div style="margin-top:12px;display:flex;flex-direction:column;align-items:center;width:100%;">
-          ${data.hasNext ? '<button class="btn" id="nx">NEXT LEVEL</button>' : ''}
+        <!-- On-Screen Next Level Loader Card -->
+        ${hasNext && nextCfg ? `
+          <div class="next-level-loader">
+            <div class="loader-pot-anim">🍲</div>
+            <div class="loader-info">
+              <div class="loader-next-label">⚡ UP NEXT</div>
+              <div class="loader-next-title">LEVEL ${nextLevel}: ${nextCfg.title || 'Next Order'}</div>
+            </div>
+            <div class="loader-track">
+              <div class="loader-fill" id="next-fill"></div>
+            </div>
+            <div class="loader-status" id="next-status">🔥 Firing up the kitchen burners...</div>
+          </div>
+        ` : ''}
+
+        <div style="margin-top:10px;display:flex;flex-direction:column;align-items:center;width:100%;gap:6px;">
+          ${hasNext ? `<button class="btn" id="nx" style="width:100%;max-width:320px;">COOK LEVEL ${nextLevel} NOW ⚡</button>` : ''}
           <button class="btn alt" id="shr">SHARE SCORE</button>
           <button class="btn alt" data-go="map">LEVEL MAP</button>
         </div>
@@ -222,35 +245,51 @@ export class Modals {
 
       modalEnd.classList.add('on');
 
-      if (data.hasNext) {
-        let secondsLeft = 4;
+      if (hasNext) {
+        const nextFill = document.getElementById('next-fill');
+        const nextStatus = document.getElementById('next-status');
         const nxBtn = document.getElementById('nx');
-        const updateNxText = () => {
-          if (nxBtn) {
-            nxBtn.innerHTML = `NEXT LEVEL <small style="opacity:0.85;font-size:14px;">(${secondsLeft}s)</small>`;
-          }
-        };
-        updateNxText();
 
-        this.autoProgressTimer = setInterval(() => {
-          secondsLeft--;
-          if (secondsLeft > 0) {
-            updateNxText();
-          } else {
-            this.clearAutoProgressTimer();
-            this.hideAll();
-            this.callbacks?.onNextLevel();
-          }
-        }, 1000);
+        const totalDuration = 2600; // 2.6 seconds smooth loading
+        const startTime = Date.now();
+
+        const triggerAdvance = () => {
+          this.clearAutoProgressTimer();
+          ParticleFx.banner(document.body, `⚡ PREPPING LEVEL ${nextLevel}...`);
+          this.hideAll();
+          this.callbacks?.onNextLevel(nextLevel);
+        };
 
         if (nxBtn) {
           nxBtn.onclick = () => {
-            this.clearAutoProgressTimer();
             SoundManager.play('click');
-            this.hideAll();
-            this.callbacks?.onNextLevel();
+            triggerAdvance();
           };
         }
+
+        this.autoProgressTimer = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(100, Math.round((elapsed / totalDuration) * 100));
+
+          if (nextFill) {
+            nextFill.style.width = `${progress}%`;
+          }
+
+          if (nextStatus) {
+            if (progress < 35) {
+              nextStatus.textContent = '🔥 Firing up the kitchen burners...';
+            } else if (progress < 75) {
+              nextStatus.textContent = '🥬 Stocking fresh ingredients...';
+            } else {
+              nextStatus.textContent = `✨ Kitchen Ready! Starting Level ${nextLevel}...`;
+            }
+          }
+
+          if (elapsed >= totalDuration) {
+            this.clearAutoProgressTimer();
+            triggerAdvance();
+          }
+        }, 40);
       }
 
       const mapBtn = modalEnd.querySelector('[data-go="map"]');
@@ -265,8 +304,8 @@ export class Modals {
 
       document.getElementById('shr')?.addEventListener('click', () => {
         this.clearAutoProgressTimer();
-        const nxBtn = document.getElementById('nx');
-        if (nxBtn) nxBtn.textContent = 'NEXT LEVEL';
+        const nextStatus = document.getElementById('next-status');
+        if (nextStatus) nextStatus.textContent = 'Paused while sharing';
         this.shareScore(data.score);
       });
       return;
@@ -284,7 +323,7 @@ export class Modals {
           <span>${data.remaining.map((r: any) => `${r.count} ${r.foodName}`).join(', ')}</span>
         </div>
         <div class="row"><span>Best score</span><span>${data.best.toLocaleString()}</span></div>
-        <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;width:100%;">
+        <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;width:100%;gap:6px;">
           <button class="btn" id="ta">TRY AGAIN</button>
           <button class="btn alt" id="shr">SHARE SCORE</button>
           <button class="btn alt" data-go="map">LEVEL MAP</button>
@@ -321,10 +360,9 @@ export class Modals {
   }
 
   public static hide(modalId: string): void {
-    if (modalId === 'mend' || modalId === 'mend_win' || modalId === 'mend_lose' || modalId === 'mstart') {
-      this.clearAutoProgressTimer();
-    }
-    const modal = document.getElementById(modalId);
+    this.clearAutoProgressTimer();
+    const targetId = (modalId === 'mend_win' || modalId === 'mend_lose') ? 'mend' : modalId;
+    const modal = document.getElementById(targetId);
     if (modal) modal.classList.remove('on');
   }
 

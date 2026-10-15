@@ -90,11 +90,10 @@ Modals.init({
       void gameManager.startLevel(state.levelNumber);
     }
   },
-  onNextLevel: () => {
+  onNextLevel: (targetLevel?: number) => {
     const state = gameManager.getState();
-    if (state) {
-      void gameManager.startLevel(state.levelNumber + 1);
-    }
+    const nextLevel = typeof targetLevel === 'number' ? targetLevel : (state ? state.levelNumber + 1 : 1);
+    void gameManager.startLevel(nextLevel);
   },
   onGoToMap: () => {
     screenManager.show('map');
